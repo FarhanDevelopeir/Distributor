@@ -1,0 +1,8 @@
+node_modules/
+src/renderer/node_modules/
+src/renderer/build/
+dist/
+prisma/dms.db
+prisma/dms.db-journal
+.env
+*.log

@@ -1,0 +1,109 @@
+// prisma/schema.prisma
+// Fully offline SQLite database schema for Distributor Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dms.db"
+}
+
+// ─── Distributors ────────────────────────────────────────────────────────────
+model Distributor {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  city        String?
+  region      String?
+  status      String   @default("active") // active | inactive
+  creditLimit Float    @default(0)
+  balance     Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders      Order[]
+  payments    Payment[]
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+model Product {
+  id          Int      @id @default(autoincrement())
+  sku         String   @unique
+  name        String
+  category    String?
+  unit        String   @default("pcs")
+  costPrice   Float    @default(0)
+  salePrice   Float    @default(0)
+  stock       Int      @default(0)
+  minStock    Int      @default(10)
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+model Order {
+  id            Int         @id @default(autoincrement())
+  orderNo       String      @unique
+  distributorId Int
+  distributor   Distributor @relation(fields: [distributorId], references: [id])
+  status        String      @default("pending") // pending | confirmed | shipped | delivered | cancelled
+  orderDate     DateTime    @default(now())
+  deliveryDate  DateTime?
+  subtotal      Float       @default(0)
+  discount      Float       @default(0)
+  tax           Float       @default(0)
+  total         Float       @default(0)
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+  payments      Payment[]
+}
+
+// ─── Order Items ──────────────────────────────────────────────────────────────
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  discount  Float   @default(0)
+  total     Float
+}
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+model Payment {
+  id            Int         @id @default(autoincrement())
+  paymentNo     String      @unique
+  distributorId Int
+  distributor   Distributor @relation(fields: [distributorId], references: [id])
+  orderId       Int?
+  order         Order?      @relation(fields: [orderId], references: [id])
+  amount        Float
+  method        String      @default("cash") // cash | bank | cheque
+  reference     String?
+  paymentDate   DateTime    @default(now())
+  notes         String?
+  createdAt     DateTime    @default(now())
+}
+
+// ─── Inventory Logs ───────────────────────────────────────────────────────────
+model InventoryLog {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  type      String   // in | out | adjustment
+  quantity  Int
+  reason    String?
+  createdAt DateTime @default(now())
+}
