@@ -4,34 +4,31 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 const TITLES = {
-  '/':              { title: 'Dashboard',    subtitle: 'Overview of business performance' },
-  '/distributors':  { title: 'Distributors', subtitle: 'Manage your distributor network' },
-  '/products':      { title: 'Products',     subtitle: 'Product catalog and inventory' },
-  '/orders':        { title: 'Orders',       subtitle: 'Sales orders management' },
-  '/payments':      { title: 'Payments',     subtitle: 'Payment records and history' },
-  '/reports':       { title: 'Reports',      subtitle: 'Analytics and business reports' },
+  '/':              { title: 'Dashboard',    subtitle: 'Business overview and analytics' },
+  '/companies':     { title: 'Companies',    subtitle: 'Manage supplier companies' },
+  '/products':      { title: 'Products',     subtitle: 'Product catalog and stock' },
+  '/salesmen':      { title: 'Salesmen',     subtitle: 'Sales team management' },
+  '/customers':     { title: 'Customers',    subtitle: 'Customer directory' },
+  '/invoices':      { title: 'Invoices',     subtitle: 'Sales billing and history' },
+  '/invoices/new':  { title: 'New Invoice',  subtitle: 'Create a sales invoice' },
   '/settings':      { title: 'Settings',     subtitle: 'Application preferences' },
 };
 
 export default function TopBar() {
   const { pathname } = useLocation();
-  const base = '/' + pathname.split('/')[1];
-  const { title, subtitle } = TITLES[base] || TITLES['/'];
+  const { title, subtitle } = TITLES[pathname] || TITLES['/' + pathname.split('/')[1]] || TITLES['/'];
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <header className="h-12 flex-shrink-0 bg-white border-b border-primary-100 flex items-center px-5 gap-4 shadow-sm">
-      {/* Page title */}
       <div className="flex-1 min-w-0">
         <h1 className="text-md font-semibold text-primary-900 leading-none">{title}</h1>
         <p className="text-2xs text-primary-400 mt-0.5">{subtitle}</p>
       </div>
 
-      {/* Right side info */}
       <div className="flex items-center gap-3">
-        {/* Date */}
         <div className="hidden sm:flex items-center gap-1.5 text-xs text-primary-500">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -40,16 +37,13 @@ export default function TopBar() {
           {dateStr}
         </div>
 
-        {/* Divider */}
         <div className="h-5 w-px bg-primary-100" />
 
-        {/* Offline badge */}
         <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded text-xs text-green-700 font-medium">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           Offline
         </div>
 
-        {/* User avatar placeholder */}
         <div className="w-7 h-7 rounded-full bg-primary-100 border border-primary-200
                         flex items-center justify-center text-2xs font-semibold text-primary-600">
           AD

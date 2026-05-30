@@ -23,35 +23,54 @@ export const api = {
   delete: (path)         => request('DELETE', path),
 };
 
-// ── Convenience helpers ─────────────────────────────────────────────────────
+function qs(params = {}) {
+  const entries = Object.entries(params).filter(([, v]) => v !== '' && v != null);
+  return entries.length ? `?${new URLSearchParams(entries)}` : '';
+}
+
 export const dashboardAPI = {
   getSummary: () => api.get('/dashboard/summary'),
 };
 
-export const distributorsAPI = {
-  list:   (params = {}) => api.get(`/distributors?${new URLSearchParams(params)}`),
-  get:    (id)           => api.get(`/distributors/${id}`),
-  create: (data)         => api.post('/distributors', data),
-  update: (id, data)     => api.put(`/distributors/${id}`, data),
-  remove: (id)           => api.delete(`/distributors/${id}`),
+export const companiesAPI = {
+  list:   (params = {}) => api.get(`/companies${qs(params)}`),
+  all:    ()             => api.get('/companies/all'),
+  get:    (id)           => api.get(`/companies/${id}`),
+  create: (data)         => api.post('/companies', data),
+  update: (id, data)     => api.put(`/companies/${id}`, data),
+  remove: (id)           => api.delete(`/companies/${id}`),
 };
 
 export const productsAPI = {
-  list:   (params = {}) => api.get(`/products?${new URLSearchParams(params)}`),
-  get:    (id)           => api.get(`/products/${id}`),
-  create: (data)         => api.post('/products', data),
-  update: (id, data)     => api.put(`/products/${id}`, data),
-  remove: (id)           => api.delete(`/products/${id}`),
+  list:        (params = {}) => api.get(`/products${qs(params)}`),
+  get:         (id)           => api.get(`/products/${id}`),
+  create:      (data)         => api.post('/products', data),
+  update:      (id, data)     => api.put(`/products/${id}`, data),
+  updateStock: (id, data)     => api.patch(`/products/${id}/stock`, data),
+  remove:      (id)           => api.delete(`/products/${id}`),
 };
 
-export const ordersAPI = {
-  list:         (params = {}) => api.get(`/orders?${new URLSearchParams(params)}`),
-  get:          (id)           => api.get(`/orders/${id}`),
-  create:       (data)         => api.post('/orders', data),
-  updateStatus: (id, status)   => api.patch(`/orders/${id}/status`, { status }),
+export const salesmenAPI = {
+  list:   (params = {}) => api.get(`/salesmen${qs(params)}`),
+  all:    ()             => api.get('/salesmen/all'),
+  get:    (id)           => api.get(`/salesmen/${id}`),
+  create: (data)         => api.post('/salesmen', data),
+  update: (id, data)     => api.put(`/salesmen/${id}`, data),
+  remove: (id)           => api.delete(`/salesmen/${id}`),
 };
 
-export const paymentsAPI = {
-  list:   (params = {}) => api.get(`/payments?${new URLSearchParams(params)}`),
-  create: (data)         => api.post('/payments', data),
+export const customersAPI = {
+  list:   (params = {}) => api.get(`/customers${qs(params)}`),
+  all:    ()             => api.get('/customers/all'),
+  get:    (id)           => api.get(`/customers/${id}`),
+  create: (data)         => api.post('/customers', data),
+  update: (id, data)     => api.put(`/customers/${id}`, data),
+  remove: (id)           => api.delete(`/customers/${id}`),
+};
+
+export const invoicesAPI = {
+  list:   (params = {}) => api.get(`/invoices${qs(params)}`),
+  get:    (id)           => api.get(`/invoices/${id}`),
+  create: (data)         => api.post('/invoices', data),
+  remove: (id)           => api.delete(`/invoices/${id}`),
 };

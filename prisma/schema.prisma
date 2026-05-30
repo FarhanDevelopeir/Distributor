@@ -10,98 +10,103 @@ datasource db {
   url      = "file:./dms.db"
 }
 
-// ─── Distributors ────────────────────────────────────────────────────────────
-model Distributor {
-  id          Int      @id @default(autoincrement())
-  code        String   @unique
-  name        String
-  email       String?
-  phone       String?
-  address     String?
-  city        String?
-  region      String?
-  status      String   @default("active") // active | inactive
-  creditLimit Float    @default(0)
-  balance     Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// ─── Companies ────────────────────────────────────────────────────────────────
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  ownerName String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  orders      Order[]
-  payments    Payment[]
+  products Product[]
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 model Product {
+  id            Int      @id @default(autoincrement())
+  name          String
+  companyId     Int
+  company       Company  @relation(fields: [companyId], references: [id])
+  purchasePrice Float    @default(0)
+  salePrice     Float    @default(0)
+  stockQuantity Int      @default(0)
+  unitType      String   @default("pcs")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  invoiceItems InvoiceItem[]
+  stockLogs    StockLog[]
+}
+
+// ─── Salesmen ─────────────────────────────────────────────────────────────────
+model Salesman {
+  id                   Int      @id @default(autoincrement())
+  fullName             String
+  phone                String?
+  address              String?
+  commissionPercentage Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  invoices Invoice[]
+}
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+model Customer {
+  id           Int      @id @default(autoincrement())
+  customerName String
+  shopName     String?
+  phone        String?
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoices Invoice[]
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────────────────
+model Invoice {
   id          Int      @id @default(autoincrement())
-  sku         String   @unique
-  name        String
-  category    String?
-  unit        String   @default("pcs")
-  costPrice   Float    @default(0)
-  salePrice   Float    @default(0)
-  stock       Int      @default(0)
-  minStock    Int      @default(10)
-  status      String   @default("active")
+  invoiceNo   String   @unique
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+  salesmanId  Int?
+  salesman    Salesman? @relation(fields: [salesmanId], references: [id])
+  invoiceDate DateTime @default(now())
+  subtotal    Float    @default(0)
+  discount    Float    @default(0)
+  total       Float    @default(0)
+  totalProfit Float    @default(0)
+  commission  Float    @default(0)
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orderItems  OrderItem[]
+  items InvoiceItem[]
 }
 
-// ─── Orders ───────────────────────────────────────────────────────────────────
-model Order {
-  id            Int         @id @default(autoincrement())
-  orderNo       String      @unique
-  distributorId Int
-  distributor   Distributor @relation(fields: [distributorId], references: [id])
-  status        String      @default("pending") // pending | confirmed | shipped | delivered | cancelled
-  orderDate     DateTime    @default(now())
-  deliveryDate  DateTime?
-  subtotal      Float       @default(0)
-  discount      Float       @default(0)
-  tax           Float       @default(0)
-  total         Float       @default(0)
-  notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  items         OrderItem[]
-  payments      Payment[]
+// ─── Invoice Items ────────────────────────────────────────────────────────────
+model InvoiceItem {
+  id            Int     @id @default(autoincrement())
+  invoiceId     Int
+  invoice       Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId     Int
+  product       Product @relation(fields: [productId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  purchasePrice Float
+  lineTotal     Float
+  lineProfit    Float
 }
 
-// ─── Order Items ──────────────────────────────────────────────────────────────
-model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  unitPrice Float
-  discount  Float   @default(0)
-  total     Float
-}
-
-// ─── Payments ─────────────────────────────────────────────────────────────────
-model Payment {
-  id            Int         @id @default(autoincrement())
-  paymentNo     String      @unique
-  distributorId Int
-  distributor   Distributor @relation(fields: [distributorId], references: [id])
-  orderId       Int?
-  order         Order?      @relation(fields: [orderId], references: [id])
-  amount        Float
-  method        String      @default("cash") // cash | bank | cheque
-  reference     String?
-  paymentDate   DateTime    @default(now())
-  notes         String?
-  createdAt     DateTime    @default(now())
-}
-
-// ─── Inventory Logs ───────────────────────────────────────────────────────────
-model InventoryLog {
+// ─── Stock Logs ───────────────────────────────────────────────────────────────
+model StockLog {
   id        Int      @id @default(autoincrement())
   productId Int
+  product   Product  @relation(fields: [productId], references: [id])
   type      String   // in | out | adjustment
   quantity  Int
   reason    String?

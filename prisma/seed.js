@@ -1,6 +1,5 @@
 // prisma/seed.js
 // Run with: node prisma/seed.js
-// Seeds the local SQLite database with sample data for testing
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
@@ -8,65 +7,132 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding DMS database...');
 
-  // ── Distributors ────────────────────────────────────────────────────────────
-  const distributors = await Promise.all([
-    prisma.distributor.upsert({
-      where: { code: 'DIST-0001' },
-      update: {},
-      create: { code: 'DIST-0001', name: 'Alpha Traders Pvt Ltd', email: 'alpha@example.com', phone: '0300-1234567', city: 'Karachi', region: 'South', creditLimit: 500000, status: 'active' },
-    }),
-    prisma.distributor.upsert({
-      where: { code: 'DIST-0002' },
-      update: {},
-      create: { code: 'DIST-0002', name: 'Beta Distribution Co.', email: 'beta@example.com', phone: '0321-7654321', city: 'Lahore', region: 'North', creditLimit: 300000, status: 'active' },
-    }),
-    prisma.distributor.upsert({
-      where: { code: 'DIST-0003' },
-      update: {},
-      create: { code: 'DIST-0003', name: 'Gamma Wholesale', phone: '0333-9876543', city: 'Islamabad', region: 'North', creditLimit: 200000, status: 'active' },
-    }),
-  ]);
+  await prisma.invoiceItem.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.stockLog.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.company.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.salesman.deleteMany();
 
-  // ── Products ─────────────────────────────────────────────────────────────────
-  const products = await Promise.all([
-    prisma.product.upsert({
-      where: { sku: 'SKU-00001' },
-      update: {},
-      create: { sku: 'SKU-00001', name: 'Mineral Water 500ml', category: 'Beverages', unit: 'carton', costPrice: 280, salePrice: 350, stock: 500, minStock: 50 },
-    }),
-    prisma.product.upsert({
-      where: { sku: 'SKU-00002' },
-      update: {},
-      create: { sku: 'SKU-00002', name: 'Energy Drink 250ml', category: 'Beverages', unit: 'carton', costPrice: 960, salePrice: 1200, stock: 120, minStock: 20 },
-    }),
-    prisma.product.upsert({
-      where: { sku: 'SKU-00003' },
-      update: {},
-      create: { sku: 'SKU-00003', name: 'Biscuits Chocolate', category: 'Snacks', unit: 'box', costPrice: 480, salePrice: 600, stock: 8, minStock: 30 },
-    }),
-  ]);
+  const company1 = await prisma.company.create({
+    data: {
+      name: 'Nestle Pakistan',
+      ownerName: 'Ahmed Khan',
+      phone: '0300-1112233',
+      address: 'Industrial Area, Karachi',
+      notes: 'Primary beverage supplier',
+    },
+  });
 
-  // ── Sample Order ─────────────────────────────────────────────────────────────
-  const existingOrder = await prisma.order.findUnique({ where: { orderNo: 'ORD-000001' } });
-  if (!existingOrder) {
-    await prisma.order.create({
-      data: {
-        orderNo: 'ORD-000001',
-        distributorId: distributors[0].id,
-        status: 'delivered',
-        subtotal: 43500,
-        discount: 2000,
-        tax: 0,
-        total: 41500,
-        items: {
-          create: [
-            { productId: products[0].id, quantity: 50, unitPrice: 350, discount: 0, total: 17500 },
-            { productId: products[1].id, quantity: 20, unitPrice: 1200, discount: 2000, total: 22000 },
-          ],
-        },
+  const company2 = await prisma.company.create({
+    data: {
+      name: 'Unilever Foods',
+      ownerName: 'Sara Malik',
+      phone: '0321-4455667',
+      address: 'Ferozepur Road, Lahore',
+    },
+  });
+
+  const product1 = await prisma.product.create({
+    data: {
+      name: 'Mineral Water 500ml',
+      companyId: company1.id,
+      purchasePrice: 280,
+      salePrice: 350,
+      stockQuantity: 450,
+      unitType: 'carton',
+    },
+  });
+
+  const product2 = await prisma.product.create({
+    data: {
+      name: 'Energy Drink 250ml',
+      companyId: company1.id,
+      purchasePrice: 960,
+      salePrice: 1200,
+      stockQuantity: 100,
+      unitType: 'carton',
+    },
+  });
+
+  await prisma.product.create({
+    data: {
+      name: 'Tea Bags Premium',
+      companyId: company2.id,
+      purchasePrice: 480,
+      salePrice: 600,
+      stockQuantity: 80,
+      unitType: 'box',
+    },
+  });
+
+  const salesman = await prisma.salesman.create({
+    data: {
+      fullName: 'Ali Hassan',
+      phone: '0333-9876543',
+      address: 'Gulberg, Lahore',
+      commissionPercentage: 5,
+    },
+  });
+
+  const customer = await prisma.customer.create({
+    data: {
+      customerName: 'Rashid Ahmed',
+      shopName: 'Ahmed General Store',
+      phone: '0345-1122334',
+      address: 'Model Town, Lahore',
+    },
+  });
+
+  const line1Total = 50 * 350;
+  const line1Profit = 50 * (350 - 280);
+  const line2Total = 20 * 1200;
+  const line2Profit = 20 * (1200 - 960);
+  const subtotal = line1Total + line2Total;
+  const totalProfit = line1Profit + line2Profit;
+  const commission = totalProfit * (salesman.commissionPercentage / 100);
+
+  await prisma.invoice.create({
+    data: {
+      invoiceNo: 'INV-000001',
+      customerId: customer.id,
+      salesmanId: salesman.id,
+      subtotal,
+      total: subtotal,
+      totalProfit,
+      commission,
+      items: {
+        create: [
+          {
+            productId: product1.id,
+            quantity: 50,
+            unitPrice: 350,
+            purchasePrice: 280,
+            lineTotal: line1Total,
+            lineProfit: line1Profit,
+          },
+          {
+            productId: product2.id,
+            quantity: 20,
+            unitPrice: 1200,
+            purchasePrice: 960,
+            lineTotal: line2Total,
+            lineProfit: line2Profit,
+          },
+        ],
       },
-    });
-  }
+    },
+  });
+
+  await prisma.stockLog.createMany({
+    data: [
+      { productId: product1.id, type: 'in', quantity: 500, reason: 'Initial stock' },
+      { productId: product1.id, type: 'out', quantity: 50, reason: 'Invoice INV-000001' },
+      { productId: product2.id, type: 'in', quantity: 120, reason: 'Initial stock' },
+      { productId: product2.id, type: 'out', quantity: 20, reason: 'Invoice INV-000001' },
+    ],
+  });
 
   console.log('✅ Seed complete!');
 }

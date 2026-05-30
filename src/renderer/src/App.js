@@ -3,19 +3,17 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Layout
 import AppLayout from './components/layout/AppLayout';
 
-// Pages
-import Dashboard    from './pages/Dashboard';
-import Distributors from './pages/Distributors';
-import Products     from './pages/Products';
-import Orders       from './pages/Orders';
-import Payments     from './pages/Payments';
-import Reports      from './pages/Reports';
-import Settings     from './pages/Settings';
+import Dashboard      from './pages/Dashboard';
+import Companies      from './pages/Companies';
+import Products       from './pages/Products';
+import Salesmen       from './pages/Salesmen';
+import Customers      from './pages/Customers';
+import Invoices       from './pages/Invoices';
+import InvoiceCreate  from './pages/InvoiceCreate';
+import Settings       from './pages/Settings';
 
-// Styles
 import './styles/index.css';
 
 export default function App() {
@@ -23,14 +21,15 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route index           element={<Dashboard />} />
-          <Route path="distributors" element={<Distributors />} />
-          <Route path="products"     element={<Products />} />
-          <Route path="orders"       element={<Orders />} />
-          <Route path="payments"     element={<Payments />} />
-          <Route path="reports"      element={<Reports />} />
-          <Route path="settings"     element={<Settings />} />
-          <Route path="*"            element={<Navigate to="/" replace />} />
+          <Route index                element={<Dashboard />} />
+          <Route path="companies"     element={<Companies />} />
+          <Route path="products"      element={<Products />} />
+          <Route path="salesmen"      element={<Salesmen />} />
+          <Route path="customers"     element={<Customers />} />
+          <Route path="invoices"      element={<Invoices />} />
+          <Route path="invoices/new"  element={<InvoiceCreate />} />
+          <Route path="settings"      element={<Settings />} />
+          <Route path="*"             element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

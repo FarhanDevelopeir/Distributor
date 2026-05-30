@@ -1,25 +1,24 @@
 // src/renderer/src/pages/Dashboard.jsx
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts';
 import { useFetch } from '../hooks/useFetch';
 import { dashboardAPI } from '../utils/api';
-import { fmt, statusBadge } from '../utils/format';
+import { fmt } from '../utils/format';
 import StatCard from '../components/dashboard/StatCard';
 import { LoadingSpinner, ErrorState } from '../components/shared/States';
 
-// ─── Icon paths ───────────────────────────────────────────────────────────────
 const ICONS = {
-  distributors: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
-  products:     'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-  orders:       'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-  revenue:      'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  revenue:  'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  profit:   'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+  invoices: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  stock:    'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
 };
 
-// Custom tooltip for charts
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -27,7 +26,7 @@ const ChartTooltip = ({ active, payload, label }) => {
       <p className="font-medium text-primary-700 mb-1">{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }} className="font-semibold">
-          {p.name}: {typeof p.value === 'number' && p.name === 'Revenue'
+          {p.name}: {typeof p.value === 'number' && (p.name === 'Revenue' || p.name === 'Profit')
             ? fmt.money(p.value)
             : p.value}
         </p>
@@ -42,18 +41,17 @@ export default function Dashboard() {
   if (loading) return <LoadingSpinner text="Loading dashboard..." />;
   if (error)   return <ErrorState message={error} onRetry={refetch} />;
 
-  const { stats = {}, recentOrders = [], monthlySales = [] } = data || {};
+  const { stats = {}, recentInvoices = [], monthlySales = [] } = data || {};
 
-  // Format monthly sales for recharts
   const chartData = (monthlySales || []).map(r => ({
-    month:   r.month?.slice(5) || '',    // "01" → month label
+    month:   r.month?.slice(5) || '',
     Revenue: Number(r.revenue) || 0,
-    Orders:  Number(r.orders)  || 0,
+    Profit:  Number(r.profit)  || 0,
+    Invoices: Number(r.invoices) || 0,
   }));
 
   return (
     <div className="space-y-4">
-      {/* ── Stat Cards ──────────────────────────────────── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         <StatCard
           title="Total Revenue"
@@ -63,42 +61,40 @@ export default function Dashboard() {
           iconPath={ICONS.revenue}
         />
         <StatCard
-          title="Active Distributors"
-          value={stats.activeDistributors ?? '—'}
-          subtitle={`${stats.totalDistributors ?? 0} total`}
+          title="Total Profit"
+          value={fmt.moneyShort(stats.totalProfit)}
+          subtitle="Gross profit"
           accent="green"
-          iconPath={ICONS.distributors}
+          iconPath={ICONS.profit}
         />
         <StatCard
-          title="Pending Orders"
-          value={stats.pendingOrders ?? '—'}
-          subtitle={`${stats.totalOrders ?? 0} total orders`}
+          title="Invoices"
+          value={stats.totalInvoices ?? '—'}
+          subtitle={`${stats.totalCustomers ?? 0} customers`}
           accent="yellow"
-          iconPath={ICONS.orders}
+          iconPath={ICONS.invoices}
         />
         <StatCard
-          title="Low Stock Items"
+          title="Low Stock"
           value={stats.lowStockProducts ?? '—'}
-          subtitle={`${stats.totalProducts ?? 0} total products`}
+          subtitle={`${stats.totalProducts ?? 0} products`}
           accent={stats.lowStockProducts > 0 ? 'red' : 'green'}
-          iconPath={ICONS.products}
+          iconPath={ICONS.stock}
         />
       </div>
 
-      {/* ── Charts Row ──────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-        {/* Revenue area chart */}
         <div className="card xl:col-span-2">
           <div className="card-header">
             <div>
               <p className="text-sm font-semibold text-primary-900">Monthly Revenue</p>
-              <p className="text-2xs text-primary-400 mt-0.5">Last 6 months performance</p>
+              <p className="text-2xs text-primary-400 mt-0.5">Last 6 months</p>
             </div>
           </div>
           <div className="p-4 h-52">
             {chartData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-xs text-primary-300">
-                No sales data yet — add your first order to see charts.
+                No sales data yet — create your first invoice.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -122,19 +118,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Orders bar chart */}
         <div className="card">
           <div className="card-header">
             <div>
-              <p className="text-sm font-semibold text-primary-900">Orders / Month</p>
-              <p className="text-2xs text-primary-400 mt-0.5">Order volume trend</p>
+              <p className="text-sm font-semibold text-primary-900">Invoices / Month</p>
+              <p className="text-2xs text-primary-400 mt-0.5">Billing volume</p>
             </div>
           </div>
           <div className="p-4 h-52">
             {chartData.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-primary-300">
-                No orders yet.
-              </div>
+              <div className="h-full flex items-center justify-center text-xs text-primary-300">No invoices yet.</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -142,8 +135,7 @@ export default function Dashboard() {
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#93c5fd' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#93c5fd' }} axisLine={false} tickLine={false} width={28} />
                   <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="Orders" fill="#bfdbfe" radius={[3, 3, 0, 0]}
-                    activeBar={{ fill: '#3b82f6' }} />
+                  <Bar dataKey="Invoices" fill="#bfdbfe" radius={[3, 3, 0, 0]} activeBar={{ fill: '#3b82f6' }} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -151,50 +143,45 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Recent Orders Table ──────────────────────────── */}
       <div className="card">
         <div className="card-header">
           <div>
-            <p className="text-sm font-semibold text-primary-900">Recent Orders</p>
+            <p className="text-sm font-semibold text-primary-900">Recent Invoices</p>
             <p className="text-2xs text-primary-400 mt-0.5">Latest 5 transactions</p>
           </div>
-          <a href="/orders" className="text-xs text-primary-500 hover:text-primary-700 font-medium">
+          <Link to="/invoices" className="text-xs text-primary-500 hover:text-primary-700 font-medium">
             View all →
-          </a>
+          </Link>
         </div>
         <div className="table-wrapper">
-          {recentOrders.length === 0 ? (
+          {recentInvoices.length === 0 ? (
             <div className="py-10 text-center text-xs text-primary-300">
-              No orders yet. Create your first order to get started.
+              No invoices yet. <Link to="/invoices/new" className="text-primary-600 hover:underline">Create one</Link>
             </div>
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Order No.</th>
-                  <th>Distributor</th>
+                  <th>Invoice No.</th>
+                  <th>Customer</th>
+                  <th>Salesman</th>
                   <th>Date</th>
-                  <th>Status</th>
                   <th className="text-right">Total</th>
+                  <th className="text-right">Profit</th>
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map(order => (
-                  <tr key={order.id}>
-                    <td className="font-mono text-primary-700 text-xs">{order.orderNo}</td>
+                {recentInvoices.map(inv => (
+                  <tr key={inv.id}>
+                    <td className="font-mono text-primary-700 text-xs">{inv.invoiceNo}</td>
                     <td>
-                      <div className="text-primary-800 font-medium">{order.distributor?.name}</div>
-                      <div className="text-2xs text-primary-400">{order.distributor?.code}</div>
+                      <div className="text-primary-800 font-medium">{inv.customer?.customerName}</div>
+                      <div className="text-2xs text-primary-400">{inv.customer?.shopName}</div>
                     </td>
-                    <td className="text-primary-500 text-xs">{fmt.date(order.orderDate)}</td>
-                    <td>
-                      <span className={statusBadge[order.status] || 'badge-gray'}>
-                        {fmt.capitalize(order.status)}
-                      </span>
-                    </td>
-                    <td className="text-right font-semibold text-primary-800 text-money">
-                      {fmt.money(order.total)}
-                    </td>
+                    <td className="text-primary-500 text-xs">{inv.salesman?.fullName || '—'}</td>
+                    <td className="text-primary-500 text-xs">{fmt.date(inv.invoiceDate)}</td>
+                    <td className="text-right font-semibold text-primary-800 text-money">{fmt.money(inv.total)}</td>
+                    <td className="text-right text-green-700 text-money">{fmt.money(inv.totalProfit)}</td>
                   </tr>
                 ))}
               </tbody>

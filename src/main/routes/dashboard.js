@@ -1,67 +1,61 @@
 // src/main/routes/dashboard.js
-// Dashboard summary stats — all computed from local SQLite
 
 const router = require('express').Router();
 const prisma = require('../db');
 
-// GET /api/dashboard/summary
 router.get('/summary', async (_req, res) => {
   try {
     const [
-      totalDistributors,
-      activeDistributors,
+      totalCompanies,
       totalProducts,
       lowStockProducts,
-      totalOrders,
-      pendingOrders,
-      recentOrders,
+      totalCustomers,
+      totalSalesmen,
+      totalInvoices,
+      recentInvoices,
       monthlySales,
     ] = await Promise.all([
-      prisma.distributor.count(),
-      prisma.distributor.count({ where: { status: 'active' } }),
+      prisma.company.count(),
       prisma.product.count(),
-      prisma.product.count({ where: { stock: { lte: prisma.product.fields.minStock } } }),
-      prisma.order.count(),
-      prisma.order.count({ where: { status: 'pending' } }),
-
-      // 5 most recent orders
-      prisma.order.findMany({
+      prisma.product.count({ where: { stockQuantity: { lte: 10 } } }),
+      prisma.customer.count(),
+      prisma.salesman.count(),
+      prisma.invoice.count(),
+      prisma.invoice.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        include: { distributor: { select: { name: true, code: true } } },
+        include: {
+          customer: { select: { customerName: true, shopName: true } },
+          salesman: { select: { fullName: true } },
+        },
       }),
-
-      // Last 6 months revenue
       prisma.$queryRaw`
         SELECT
-          strftime('%Y-%m', orderDate) AS month,
-          COUNT(*) AS orders,
-          SUM(total) AS revenue
-        FROM "Order"
-        WHERE orderDate >= date('now', '-6 months')
-          AND status != 'cancelled'
+          strftime('%Y-%m', invoiceDate) AS month,
+          COUNT(*) AS invoices,
+          SUM(total) AS revenue,
+          SUM(totalProfit) AS profit
+        FROM Invoice
+        WHERE invoiceDate >= date('now', '-6 months')
         GROUP BY month
         ORDER BY month ASC
       `,
     ]);
 
-    // Total revenue (all non-cancelled orders)
-    const revenueResult = await prisma.order.aggregate({
-      _sum: { total: true },
-      where: { status: { not: 'cancelled' } },
-    });
+    const revenueResult = await prisma.invoice.aggregate({ _sum: { total: true, totalProfit: true } });
 
     res.json({
       stats: {
-        totalDistributors,
-        activeDistributors,
+        totalCompanies,
         totalProducts,
         lowStockProducts,
-        totalOrders,
-        pendingOrders,
+        totalCustomers,
+        totalSalesmen,
+        totalInvoices,
         totalRevenue: revenueResult._sum.total || 0,
+        totalProfit: revenueResult._sum.totalProfit || 0,
       },
-      recentOrders,
+      recentInvoices,
       monthlySales,
     });
   } catch (err) {
