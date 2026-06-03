@@ -43,7 +43,20 @@ router.get('/all', async (_req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const customer = await prisma.customer.findUnique({ where: { id: Number(req.params.id) } });
+    const customer = await prisma.customer.findUnique({
+      where: { id: Number(req.params.id) },
+      include: {
+        invoices: {
+          take: 25,
+          orderBy: { invoiceDate: 'desc' },
+          include: {
+            salesman: { select: { fullName: true } },
+            deliveryPerson: { select: { fullName: true, vehicleNo: true } },
+            _count: { select: { items: true } },
+          },
+        },
+      },
+    });
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
     res.json(customer);
   } catch (err) {

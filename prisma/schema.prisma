@@ -54,6 +54,20 @@ model Salesman {
   invoices Invoice[]
 }
 
+// ─── Delivery Persons ─────────────────────────────────────────────────────────
+model DeliveryPerson {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  phone     String?
+  address   String?
+  vehicleNo String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoices Invoice[]
+}
+
 // ─── Customers ────────────────────────────────────────────────────────────────
 model Customer {
   id           Int      @id @default(autoincrement())
@@ -75,6 +89,8 @@ model Invoice {
   customer    Customer @relation(fields: [customerId], references: [id])
   salesmanId  Int?
   salesman    Salesman? @relation(fields: [salesmanId], references: [id])
+  deliveryPersonId Int?
+  deliveryPerson   DeliveryPerson? @relation(fields: [deliveryPersonId], references: [id])
   invoiceDate DateTime @default(now())
   subtotal    Float    @default(0)
   discount    Float    @default(0)

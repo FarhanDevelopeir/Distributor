@@ -1,6 +1,7 @@
 // src/renderer/src/pages/Companies.jsx
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { companiesAPI } from '../utils/api';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/shared/States';
@@ -142,6 +143,7 @@ export default function Companies() {
                     <td><span className="badge-blue">{row._count?.products ?? 0}</span></td>
                     <td>
                       <div className="flex items-center gap-1">
+                        <Link className="btn-ghost btn-sm" to={`/companies/${row.id}`}>Profile</Link>
                         <button className="btn-ghost btn-icon p-1" onClick={() => openEdit(row)} title="Edit">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

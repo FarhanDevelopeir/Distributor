@@ -3,6 +3,20 @@
 const router = require('express').Router();
 const prisma = require('../db');
 
+async function getNextInvoiceNo(client) {
+  const invoices = await client.invoice.findMany({
+    select: { invoiceNo: true },
+  });
+
+  const maxNo = invoices.reduce((max, invoice) => {
+    const match = /^INV-(\d+)$/.exec(invoice.invoiceNo || '');
+    const value = match ? Number(match[1]) : 0;
+    return Math.max(max, value);
+  }, 0);
+
+  return `INV-${String(maxNo + 1).padStart(6, '0')}`;
+}
+
 router.get('/', async (req, res) => {
   try {
     const { search, page = 1, limit = 20 } = req.query;
@@ -14,6 +28,7 @@ router.get('/', async (req, res) => {
             { customer: { customerName: { contains: search } } },
             { customer: { shopName: { contains: search } } },
             { salesman: { fullName: { contains: search } } },
+            { deliveryPerson: { fullName: { contains: search } } },
           ],
         }
       : {};
@@ -27,6 +42,7 @@ router.get('/', async (req, res) => {
         include: {
           customer: { select: { id: true, customerName: true, shopName: true } },
           salesman: { select: { id: true, fullName: true } },
+          deliveryPerson: { select: { id: true, fullName: true, vehicleNo: true } },
           _count: { select: { items: true } },
         },
       }),
@@ -46,6 +62,7 @@ router.get('/:id', async (req, res) => {
       include: {
         customer: true,
         salesman: true,
+        deliveryPerson: true,
         items: { include: { product: { include: { company: { select: { name: true } } } } } },
       },
     });
@@ -58,7 +75,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { customerId, salesmanId, discount = 0, notes, items = [] } = req.body;
+    const { customerId, salesmanId, deliveryPersonId, discount = 0, notes, items = [] } = req.body;
 
     if (!customerId) return res.status(400).json({ error: 'Customer is required' });
     if (!items.length) return res.status(400).json({ error: 'At least one product is required' });
@@ -100,15 +117,15 @@ router.post('/', async (req, res) => {
       if (salesman) commission = totalProfit * (salesman.commissionPercentage / 100);
     }
 
-    const count = await prisma.invoice.count();
-    const invoiceNo = `INV-${String(count + 1).padStart(6, '0')}`;
-
     const invoice = await prisma.$transaction(async (tx) => {
+      const invoiceNo = await getNextInvoiceNo(tx);
+
       const created = await tx.invoice.create({
         data: {
           invoiceNo,
           customerId: Number(customerId),
           salesmanId: salesmanId ? Number(salesmanId) : null,
+          deliveryPersonId: deliveryPersonId ? Number(deliveryPersonId) : null,
           subtotal,
           discount: discountAmount,
           total,
@@ -120,6 +137,7 @@ router.post('/', async (req, res) => {
         include: {
           customer: true,
           salesman: true,
+          deliveryPerson: true,
           items: { include: { product: true } },
         },
       });

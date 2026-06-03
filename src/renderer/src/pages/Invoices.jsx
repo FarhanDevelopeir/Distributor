@@ -91,6 +91,7 @@ export default function Invoices() {
                   <th>Invoice No.</th>
                   <th>Customer</th>
                   <th>Salesman</th>
+                  <th>Delivery</th>
                   <th>Date</th>
                   <th>Items</th>
                   <th className="text-right">Total</th>
@@ -109,6 +110,7 @@ export default function Invoices() {
                       )}
                     </td>
                     <td className="text-primary-600 text-xs">{row.salesman?.fullName || '—'}</td>
+                    <td className="text-primary-600 text-xs">{row.deliveryPerson?.fullName || '—'}</td>
                     <td className="text-primary-500 text-xs">{fmt.date(row.invoiceDate)}</td>
                     <td><span className="badge-blue">{row._count?.items ?? 0}</span></td>
                     <td className="text-right text-money font-semibold text-primary-800">{fmt.money(row.total)}</td>
@@ -141,7 +143,7 @@ export default function Invoices() {
         title={viewInvoice ? `Invoice ${viewInvoice.invoiceNo}` : ''} size="lg">
         {viewInvoice && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-3 gap-3 text-xs">
               <div>
                 <p className="text-primary-400">Customer</p>
                 <p className="font-medium text-primary-900">{viewInvoice.customer?.customerName}</p>
@@ -151,6 +153,11 @@ export default function Invoices() {
                 <p className="text-primary-400">Salesman</p>
                 <p className="font-medium text-primary-900">{viewInvoice.salesman?.fullName || '—'}</p>
                 <p className="text-primary-500">{fmt.date(viewInvoice.invoiceDate)}</p>
+              </div>
+              <div>
+                <p className="text-primary-400">Delivery Person</p>
+                <p className="font-medium text-primary-900">{viewInvoice.deliveryPerson?.fullName || '—'}</p>
+                <p className="text-primary-500">{viewInvoice.deliveryPerson?.vehicleNo || ''}</p>
               </div>
             </div>
 

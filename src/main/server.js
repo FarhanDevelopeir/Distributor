@@ -8,6 +8,7 @@ const companyRoutes   = require('./routes/companies');
 const productRoutes   = require('./routes/products');
 const salesmanRoutes  = require('./routes/salesmen');
 const customerRoutes  = require('./routes/customers');
+const deliveryPersonRoutes = require('./routes/deliveryPersons');
 const invoiceRoutes   = require('./routes/invoices');
 const dashboardRoutes = require('./routes/dashboard');
 
@@ -34,6 +35,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/salesmen', salesmanRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/delivery-persons', deliveryPersonRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
 app.use((_req, res) => {

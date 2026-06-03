@@ -68,6 +68,15 @@ export const customersAPI = {
   remove: (id)           => api.delete(`/customers/${id}`),
 };
 
+export const deliveryPersonsAPI = {
+  list:   (params = {}) => api.get(`/delivery-persons${qs(params)}`),
+  all:    ()             => api.get('/delivery-persons/all'),
+  get:    (id)           => api.get(`/delivery-persons/${id}`),
+  create: (data)         => api.post('/delivery-persons', data),
+  update: (id, data)     => api.put(`/delivery-persons/${id}`, data),
+  remove: (id)           => api.delete(`/delivery-persons/${id}`),
+};
+
 export const invoicesAPI = {
   list:   (params = {}) => api.get(`/invoices${qs(params)}`),
   get:    (id)           => api.get(`/invoices/${id}`),

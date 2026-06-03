@@ -14,6 +14,7 @@ async function main() {
   await prisma.company.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.salesman.deleteMany();
+  await prisma.deliveryPerson.deleteMany();
 
   const company1 = await prisma.company.create({
     data: {
@@ -85,6 +86,16 @@ async function main() {
     },
   });
 
+  const deliveryPerson = await prisma.deliveryPerson.create({
+    data: {
+      fullName: 'Bilal Ahmed',
+      phone: '0301-7788990',
+      address: 'Johar Town, Lahore',
+      vehicleNo: 'LEA-4521',
+      notes: 'Handles city deliveries',
+    },
+  });
+
   const line1Total = 50 * 350;
   const line1Profit = 50 * (350 - 280);
   const line2Total = 20 * 1200;
@@ -98,6 +109,7 @@ async function main() {
       invoiceNo: 'INV-000001',
       customerId: customer.id,
       salesmanId: salesman.id,
+      deliveryPersonId: deliveryPerson.id,
       subtotal,
       total: subtotal,
       totalProfit,

@@ -1,16 +1,16 @@
-// src/renderer/src/pages/Salesmen.jsx
+// src/renderer/src/pages/DeliveryPersons.jsx
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
-import { salesmenAPI } from '../utils/api';
+import { deliveryPersonsAPI } from '../utils/api';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/shared/States';
 import Modal from '../components/shared/Modal';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 
-const EMPTY = { fullName: '', phone: '', address: '', commissionPercentage: '' };
+const EMPTY = { fullName: '', phone: '', address: '', vehicleNo: '', notes: '' };
 
-export default function Salesmen() {
+export default function DeliveryPersons() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,7 +22,7 @@ export default function Salesmen() {
   const [formError, setFormError] = useState('');
 
   const { data, loading, error, refetch } = useFetch(
-    () => salesmenAPI.list({ search, page, limit: 15 }),
+    () => deliveryPersonsAPI.list({ search, page, limit: 15 }),
     [search, page]
   );
 
@@ -42,7 +42,8 @@ export default function Salesmen() {
       fullName: row.fullName || '',
       phone: row.phone || '',
       address: row.address || '',
-      commissionPercentage: row.commissionPercentage ?? '',
+      vehicleNo: row.vehicleNo || '',
+      notes: row.notes || '',
     });
     setFormError('');
     setModalOpen(true);
@@ -53,9 +54,8 @@ export default function Salesmen() {
     setSaving(true);
     setFormError('');
     try {
-      const payload = { ...form, commissionPercentage: Number(form.commissionPercentage) || 0 };
-      if (editing) await salesmenAPI.update(editing.id, payload);
-      else await salesmenAPI.create(payload);
+      if (editing) await deliveryPersonsAPI.update(editing.id, form);
+      else await deliveryPersonsAPI.create(form);
       setModalOpen(false);
       refetch();
     } catch (err) {
@@ -68,7 +68,7 @@ export default function Salesmen() {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await salesmenAPI.remove(editing.id);
+      await deliveryPersonsAPI.remove(editing.id);
       setDeleteOpen(false);
       refetch();
     } catch (err) {
@@ -85,14 +85,14 @@ export default function Salesmen() {
     <div className="space-y-4">
       <div className="page-header">
         <div>
-          <h2 className="page-title">Salesmen</h2>
+          <h2 className="page-title">Delivery Persons</h2>
           <p className="page-subtitle">{total} total records</p>
         </div>
         <button className="btn-primary" onClick={openCreate}>
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Add Salesman
+          Add Delivery Person
         </button>
       </div>
 
@@ -103,7 +103,7 @@ export default function Salesmen() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input className="input pl-8" placeholder="Search salesmen..."
+          <input className="input pl-8" placeholder="Search delivery persons..."
             value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <button className="btn-ghost btn-sm" onClick={refetch}>Refresh</button>
@@ -113,8 +113,8 @@ export default function Salesmen() {
         {loading ? <LoadingSpinner /> :
          error   ? <ErrorState message={error} onRetry={refetch} /> :
          rows.length === 0 ? (
-           <EmptyState title="No salesmen found" subtitle="Add your first salesman."
-             action={<button className="btn-primary btn-sm" onClick={openCreate}>Add Salesman</button>} />
+           <EmptyState title="No delivery persons found" subtitle="Add the delivery staff who deliver products to customers."
+             action={<button className="btn-primary btn-sm" onClick={openCreate}>Add Delivery Person</button>} />
          ) : (
           <div className="table-wrapper">
             <table className="table">
@@ -122,8 +122,9 @@ export default function Salesmen() {
                 <tr>
                   <th>Full Name</th>
                   <th>Phone</th>
+                  <th>Vehicle No.</th>
                   <th>Address</th>
-                  <th>Commission %</th>
+                  <th>Deliveries</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -132,11 +133,12 @@ export default function Salesmen() {
                   <tr key={row.id}>
                     <td className="font-medium text-primary-900">{row.fullName}</td>
                     <td className="text-primary-600">{row.phone || '—'}</td>
+                    <td className="text-primary-600">{row.vehicleNo || '—'}</td>
                     <td className="text-primary-500 text-xs max-w-[200px] truncate">{row.address || '—'}</td>
-                    <td><span className="badge-blue">{row.commissionPercentage}%</span></td>
+                    <td><span className="badge-blue">{row._count?.invoices ?? 0}</span></td>
                     <td>
                       <div className="flex items-center gap-1">
-                        <Link className="btn-ghost btn-sm" to={`/salesmen/${row.id}`}>Profile</Link>
+                        <Link className="btn-ghost btn-sm" to={`/delivery-persons/${row.id}`}>Profile</Link>
                         <button className="btn-ghost btn-icon p-1" onClick={() => openEdit(row)}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -165,16 +167,16 @@ export default function Salesmen() {
           <span>Showing {rows.length} of {total}</span>
           <div className="flex items-center gap-1">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="btn-secondary btn-sm disabled:opacity-40">← Prev</button>
+              className="btn-secondary btn-sm disabled:opacity-40">Prev</button>
             <span className="px-2 font-medium text-primary-700">{page} / {totalPages}</span>
             <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="btn-secondary btn-sm disabled:opacity-40">Next →</button>
+              className="btn-secondary btn-sm disabled:opacity-40">Next</button>
           </div>
         </div>
       )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}
-        title={editing ? 'Edit Salesman' : 'Add Salesman'}>
+        title={editing ? 'Edit Delivery Person' : 'Add Delivery Person'}>
         <form onSubmit={handleSave} className="space-y-3">
           {formError && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded">{formError}</p>}
           <div>
@@ -187,14 +189,17 @@ export default function Salesmen() {
               <input className="input" value={form.phone} onChange={set('phone')} />
             </div>
             <div>
-              <label className="label">Commission %</label>
-              <input className="input" type="number" min="0" max="100" step="0.1"
-                value={form.commissionPercentage} onChange={set('commissionPercentage')} />
+              <label className="label">Vehicle No.</label>
+              <input className="input" value={form.vehicleNo} onChange={set('vehicleNo')} />
             </div>
           </div>
           <div>
             <label className="label">Address</label>
             <input className="input" value={form.address} onChange={set('address')} />
+          </div>
+          <div>
+            <label className="label">Notes</label>
+            <textarea className="input min-h-[60px] resize-y" value={form.notes} onChange={set('notes')} />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" className="btn-secondary btn-sm" onClick={() => setModalOpen(false)}>Cancel</button>
@@ -206,7 +211,7 @@ export default function Salesmen() {
       </Modal>
 
       <ConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDelete}
-        title="Delete Salesman" message={`Delete "${editing?.fullName}"?`} loading={deleting} />
+        title="Delete Delivery Person" message={`Delete "${editing?.fullName}"?`} loading={deleting} />
     </div>
   );
 }

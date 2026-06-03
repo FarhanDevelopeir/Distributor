@@ -9,6 +9,7 @@ const TITLES = {
   '/products':      { title: 'Products',     subtitle: 'Product catalog and stock' },
   '/salesmen':      { title: 'Salesmen',     subtitle: 'Sales team management' },
   '/customers':     { title: 'Customers',    subtitle: 'Customer directory' },
+  '/delivery-persons': { title: 'Delivery Persons', subtitle: 'Delivery staff and assignments' },
   '/invoices':      { title: 'Invoices',     subtitle: 'Sales billing and history' },
   '/invoices/new':  { title: 'New Invoice',  subtitle: 'Create a sales invoice' },
   '/settings':      { title: 'Settings',     subtitle: 'Application preferences' },

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
-import { productsAPI, customersAPI, salesmenAPI, invoicesAPI } from '../utils/api';
+import { productsAPI, customersAPI, salesmenAPI, deliveryPersonsAPI, invoicesAPI } from '../utils/api';
 import { fmt } from '../utils/format';
 import { LoadingSpinner, ErrorState } from '../components/shared/States';
 
@@ -13,6 +13,7 @@ export default function InvoiceCreate() {
   const navigate = useNavigate();
   const [customerId, setCustomerId] = useState('');
   const [salesmanId, setSalesmanId] = useState('');
+  const [deliveryPersonId, setDeliveryPersonId] = useState('');
   const [discount, setDiscount] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState([emptyLine()]);
@@ -31,10 +32,15 @@ export default function InvoiceCreate() {
     salesmenAPI.all,
     []
   );
+  const { data: deliveryPersonsData, loading: deliveryPersonsLoading, error: deliveryPersonsError } = useFetch(
+    deliveryPersonsAPI.all,
+    []
+  );
 
   const products = productsData?.data || [];
   const customers = customersData?.data || [];
   const salesmen = salesmenData?.data || [];
+  const deliveryPersons = deliveryPersonsData?.data || [];
 
   const productMap = useMemo(
     () => Object.fromEntries(products.map(p => [String(p.id), p])),
@@ -104,6 +110,7 @@ export default function InvoiceCreate() {
       await invoicesAPI.create({
         customerId: Number(customerId),
         salesmanId: salesmanId ? Number(salesmanId) : null,
+        deliveryPersonId: deliveryPersonId ? Number(deliveryPersonId) : null,
         discount: discountAmount,
         notes,
         items,
@@ -116,8 +123,8 @@ export default function InvoiceCreate() {
     }
   };
 
-  const loading = productsLoading || customersLoading || salesmenLoading;
-  const error = productsError || customersError || salesmenError;
+  const loading = productsLoading || customersLoading || salesmenLoading || deliveryPersonsLoading;
+  const error = productsError || customersError || salesmenError || deliveryPersonsError;
 
   if (loading) return <LoadingSpinner text="Loading billing data..." />;
   if (error) return <ErrorState message={error} />;
@@ -136,7 +143,7 @@ export default function InvoiceCreate() {
         <div className="xl:col-span-2 space-y-4">
           <div className="card p-4">
             <p className="text-xs font-semibold text-primary-700 uppercase tracking-wide mb-3">Invoice Details</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="label">Customer *</label>
                 <select className="select" value={customerId} onChange={e => setCustomerId(e.target.value)} required>
@@ -155,6 +162,17 @@ export default function InvoiceCreate() {
                   {salesmen.map(s => (
                     <option key={s.id} value={s.id}>
                       {s.fullName} ({s.commissionPercentage}%)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">Delivery Person</label>
+                <select className="select" value={deliveryPersonId} onChange={e => setDeliveryPersonId(e.target.value)}>
+                  <option value="">No delivery person</option>
+                  {deliveryPersons.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.fullName}{d.vehicleNo ? ` (${d.vehicleNo})` : ''}
                     </option>
                   ))}
                 </select>

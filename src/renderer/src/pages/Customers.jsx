@@ -1,6 +1,7 @@
 // src/renderer/src/pages/Customers.jsx
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { customersAPI } from '../utils/api';
 import { LoadingSpinner, ErrorState, EmptyState } from '../components/shared/States';
@@ -134,6 +135,7 @@ export default function Customers() {
                     <td className="text-primary-500 text-xs max-w-[200px] truncate">{row.address || '—'}</td>
                     <td>
                       <div className="flex items-center gap-1">
+                        <Link className="btn-ghost btn-sm" to={`/customers/${row.id}`}>Profile</Link>
                         <button className="btn-ghost btn-icon p-1" onClick={() => openEdit(row)}>
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

@@ -48,7 +48,26 @@ router.get('/:id', async (req, res) => {
   try {
     const company = await prisma.company.findUnique({
       where: { id: Number(req.params.id) },
-      include: { products: true },
+      include: {
+        products: {
+          orderBy: { name: 'asc' },
+          include: {
+            invoiceItems: {
+              take: 10,
+              orderBy: { id: 'desc' },
+              include: {
+                invoice: {
+                  include: {
+                    customer: { select: { customerName: true, shopName: true } },
+                    salesman: { select: { fullName: true } },
+                    deliveryPerson: { select: { fullName: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     if (!company) return res.status(404).json({ error: 'Company not found' });
     res.json(company);

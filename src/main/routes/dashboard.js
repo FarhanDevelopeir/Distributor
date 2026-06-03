@@ -11,6 +11,7 @@ router.get('/summary', async (_req, res) => {
       lowStockProducts,
       totalCustomers,
       totalSalesmen,
+      totalDeliveryPersons,
       totalInvoices,
       recentInvoices,
       monthlySales,
@@ -20,6 +21,7 @@ router.get('/summary', async (_req, res) => {
       prisma.product.count({ where: { stockQuantity: { lte: 10 } } }),
       prisma.customer.count(),
       prisma.salesman.count(),
+      prisma.deliveryPerson.count(),
       prisma.invoice.count(),
       prisma.invoice.findMany({
         take: 5,
@@ -27,6 +29,7 @@ router.get('/summary', async (_req, res) => {
         include: {
           customer: { select: { customerName: true, shopName: true } },
           salesman: { select: { fullName: true } },
+          deliveryPerson: { select: { fullName: true } },
         },
       }),
       prisma.$queryRaw`
@@ -51,6 +54,7 @@ router.get('/summary', async (_req, res) => {
         lowStockProducts,
         totalCustomers,
         totalSalesmen,
+        totalDeliveryPersons,
         totalInvoices,
         totalRevenue: revenueResult._sum.total || 0,
         totalProfit: revenueResult._sum.totalProfit || 0,
